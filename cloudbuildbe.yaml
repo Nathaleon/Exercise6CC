@@ -32,7 +32,7 @@ steps:
       [
         "run",
         "deploy",
-        "be",
+        "exercise6cc-leon",
         "--image",
         "gcr.io/$PROJECT_ID/exercise6cc-leon",
         "--timeout",
