@@ -1,29 +1,32 @@
 steps:
-  # STEP 0: Copy .env dari bucket ke backend
-  - name: "gcr.io/cloud-builders/gsutil"
-    args: ["cp", "gs://kelompok_09_e/.env", "./backend/.env"]
-
-  # STEP 1: Build Docker image (jika kamu pakai Dockerfile)
+  # Step 1: Build Docker image dari folder backend
   - name: "gcr.io/cloud-builders/docker"
     args: ["build", "-t", "gcr.io/$PROJECT_ID/exercise6cc-leon", "."]
     dir: "backend"
 
-  # STEP 2: Push ke Artifact Registry
+  # Step 2: Push Docker image ke Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/exercise6cc-leon"]
 
-  # STEP 3: Deploy ke Cloud Run TANPA `--set-env-vars`
+  # Step 3: Deploy ke Cloud Run dengan set environment variables dari substitution
   - name: "gcr.io/cloud-builders/gcloud"
     entrypoint: gcloud
     args:
       [
-        "run", "deploy", "exercise6cc-leon",
-        "--image", "gcr.io/$PROJECT_ID/exercise6cc-leon",
-        "--region", "us-central1",
-        "--port", "5000",
+        "run",
+        "deploy",
+        "exercise6cc-leon",
+        "--image",
+        "gcr.io/$PROJECT_ID/exercise6cc-leon",
+        "--timeout",
+        "1000s",
+        "--port",
+        "5000",
+        "--region",
+        "us-central1",
         "--allow-unauthenticated",
-        "--timeout", "1000s",
-        "--update-env-vars", "NODE_ENV=production"
+        "--set-env-vars",
+        "ACCESS_TOKEN_SECRET=${_ACCESS_TOKEN_SECRET},REFRESH_TOKEN_SECRET=${_REFRESH_TOKEN_SECRET},DB_HOST=${_DB_HOST},DB_NAME=${_DB_NAME},DB_PASSWORD=${_DB_PASSWORD},DB_USERNAME=${_DB_USERNAME}"
       ]
 
 options:
