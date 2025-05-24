@@ -8,18 +8,18 @@ const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     // Client-side validation for empty fields
     if (!username.trim()) {
-      setErrorMessage("Username tidak boleh kosong.");
+      setErrorMsg("Username tidak boleh kosong.");
       return;
     }
     if (!password.trim()) {
-      setErrorMessage("Password tidak boleh kosong.");
+      setErrorMsg("Password tidak boleh kosong.");
       return;
     }
 
@@ -47,7 +47,7 @@ const Login = () => {
         errorMsg = err.message;
       }
       
-      setErrorMessage(errorMsg);
+      setErrorMsg(errorMsg);
       console.error("Login.js: Login gagal karena:", errorMsg, err); 
     }
   };
@@ -78,7 +78,7 @@ const Login = () => {
       >
         <h2 style={{ marginBottom: "25px", color: "#f0f0f0" }}>Login</h2>
         <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          {errorMessage && (
+          {errorMsg && (
             <p
               style={{
                 color: "#ff6b6b", 
@@ -90,7 +90,7 @@ const Login = () => {
                 border: "1px solid #ff6b6b",
               }}
             >
-              {errorMessage}
+              {errorMsg}
             </p>
           )}
           <input
