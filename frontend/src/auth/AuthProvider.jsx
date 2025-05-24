@@ -8,6 +8,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(null);
+  const [username, setUsername] = useState(null);
 
   const login = async (username, password) => {
     try {
@@ -17,6 +18,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       setAccessToken(res.data.accessToken);
+      setUsername(res.data.username);
 
       // Simpan refresh token di cookie (misalnya 5 hari)
       Cookies.set("refreshToken", res.data.refreshToken, {
@@ -34,6 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setAccessToken(null);
+    setUsername(null);
     Cookies.remove("refreshToken");
   };
 
@@ -49,9 +52,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Fungsi setAuth yang dibutuhkan oleh Login component
+  const setAuth = ({ username: newUsername, accessToken: newAccessToken }) => {
+    setUsername(newUsername);
+    setAccessToken(newAccessToken);
+  };
+
   return (
     <AuthContext.Provider
-      value={{ accessToken, login, logout, refreshAccessToken }}
+      value={{ 
+        accessToken, 
+        username,
+        login, 
+        logout, 
+        refreshAccessToken,
+        setAuth // Tambahkan setAuth ke context
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -62,8 +78,4 @@ AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-
 export { AuthContext };
-
-
-export const useAuthContext = () => useContext(AuthContext);
