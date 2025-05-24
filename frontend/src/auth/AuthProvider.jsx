@@ -1,62 +1,65 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
+import Cookies from "js-cookie";
+import axios from "../api/axiosInstance";
+import PropTypes from "prop-types";
+import { BASE_URL } from "../utils.js";
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  
-  const [auth, setAuth] = useState(() => {
-    try {
-      const storedAuth = localStorage.getItem('auth');
-      console.log("AuthProvider: Loading auth from localStorage:", storedAuth);
-      
-      if (storedAuth) {
-        const parsedAuth = JSON.parse(storedAuth);
-        console.log("AuthProvider: Parsed auth:", parsedAuth);
-        
-      
-        if (parsedAuth && parsedAuth.accessToken && parsedAuth.username) {
-          console.log("AuthProvider: Valid auth found in localStorage");
-          return parsedAuth;
-        } else {
-          console.log("AuthProvider: Invalid auth structure in localStorage");
-        }
-      } else {
-        console.log("AuthProvider: No auth found in localStorage");
-      }
-      return null;
-    } catch (error) {
-      console.error("AuthProvider: Failed to load auth state from localStorage:", error);
-      return null;
-    }
-  });
+  const [accessToken, setAccessToken] = useState(null);
 
- 
-  const setAuthWithLogging = (newAuth) => {
-    console.log("AuthProvider: setAuth called with:", newAuth);
-    setAuth(newAuth);
+  const login = async (username, password) => {
+    try {
+      const res = await axios.post(`${BASE_URL}/login`, {
+        username,
+        password,
+      });
+
+      setAccessToken(res.data.accessToken);
+
+      // Simpan refresh token di cookie (misalnya 5 hari)
+      Cookies.set("refreshToken", res.data.refreshToken, {
+        secure: true,
+        sameSite: "Strict",
+        expires: 5,
+      });
+
+      return true;
+    } catch (err) {
+      console.error("Login failed:", err);
+      return false;
+    }
   };
 
-  // Gunakan useEffect untuk menyimpan state 'auth' ke localStorage setiap kali berubah.
-  useEffect(() => {
-    console.log("AuthProvider: Auth state changed:", auth);
-    
+  const logout = () => {
+    setAccessToken(null);
+    Cookies.remove("refreshToken");
+  };
+
+  const refreshAccessToken = async () => {
     try {
-      if (auth && auth.accessToken && auth.username) {
-        const authToStore = JSON.stringify(auth);
-        localStorage.setItem('auth', authToStore);
-        console.log("AuthProvider: Auth saved to localStorage:", authToStore);
-      } else {
-        localStorage.removeItem('auth');
-        console.log("AuthProvider: Auth removed from localStorage");
-      }
-    } catch (error) {
-      console.error("AuthProvider: Failed to save auth state to localStorage:", error);
+      const res = await axios.get(`${BASE_URL}/token`);
+      setAccessToken(res.data.accessToken);
+      return res.data.accessToken;
+    } catch (err) {
+      console.error("Token refresh failed:", err);
+      logout();
+      return "kosong";
     }
-  }, [auth]);
+  };
 
   return (
-    <AuthContext.Provider value={{ auth, setAuth: setAuthWithLogging }}>
+    <AuthContext.Provider
+      value={{ accessToken, login, logout, refreshAccessToken }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+export const useAuthContext = () => useContext(AuthContext);
