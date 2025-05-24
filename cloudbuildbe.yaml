@@ -1,7 +1,7 @@
 steps:
   # STEP 0: Copy .env dari bucket ke folder backend
   - name: "gcr.io/cloud-builders/gsutil"
-    args: ["cp", "gs://your-bucket-name/env/.env", "./backend/.env"]
+    args: ["cp", "gs://kelompok_09_e/env/.env", "./backend/.env"]
 
   # STEP 1: Build Docker image
   - name: "gcr.io/cloud-builders/docker"
