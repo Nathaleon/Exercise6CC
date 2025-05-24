@@ -8,18 +8,18 @@ const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [msg, setMsg] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     // Client-side validation for empty fields
     if (!username.trim()) {
-      setMsg("Username tidak boleh kosong.");
+      setErrorMessage("Username tidak boleh kosong.");
       return;
     }
     if (!password.trim()) {
-      setMsg("Password tidak boleh kosong.");
+      setErrorMessage("Password tidak boleh kosong.");
       return;
     }
 
@@ -29,8 +29,26 @@ const Login = () => {
       console.log("Login.js: setAuth dipanggil dengan:", { username: res.data.username, accessToken: res.data.accessToken });
       navigate("/users");
     } catch (err) {
-      setMsg(err.response?.data?.msg || "Login gagal. Silakan coba lagi.");
-      console.error("Login.js: Login gagal karena:", err.response?.data?.msg || err.message); 
+      // More robust error handling
+      let errorMsg = "Login gagal. Silakan coba lagi.";
+      
+      if (err.response?.data) {
+        // Handle different response formats
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        } else if (err.response.data.msg) {
+          errorMsg = err.response.data.msg;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      setErrorMessage(errorMsg);
+      console.error("Login.js: Login gagal karena:", errorMsg, err); 
     }
   };
 
@@ -60,7 +78,7 @@ const Login = () => {
       >
         <h2 style={{ marginBottom: "25px", color: "#f0f0f0" }}>Login</h2>
         <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          {msg && (
+          {errorMessage && (
             <p
               style={{
                 color: "#ff6b6b", 
@@ -72,7 +90,7 @@ const Login = () => {
                 border: "1px solid #ff6b6b",
               }}
             >
-              {msg}
+              {errorMessage}
             </p>
           )}
           <input
