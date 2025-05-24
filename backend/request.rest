@@ -1,9 +1,9 @@
 ### Register User Baru
-POST http://localhost:5000/register
+POST https://exercise6cc-leon-436215937980.us-central1.run.app/register
 Content-Type: application/json
 
 {
-  "username": "leon",
+  "username": "leon2",
   "password": "password123",
   "confPassword": "password123"
 }
