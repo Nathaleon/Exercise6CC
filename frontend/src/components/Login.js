@@ -26,7 +26,6 @@ const Login = () => {
     try {
       const res = await axiosInstance.post("/login", { username, password });
       setAuth({ username: res.data.username, accessToken: res.data.accessToken });
-      // PENTING: Log ini untuk memverifikasi apa yang disimpan di AuthContext
       console.log("Login.js: setAuth dipanggil dengan:", { username: res.data.username, accessToken: res.data.accessToken });
       navigate("/users");
     } catch (err) {
