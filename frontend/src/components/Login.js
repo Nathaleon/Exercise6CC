@@ -3,56 +3,87 @@ import { useAuth } from "../auth/useAuth";
 import { useNavigate, Link } from "react-router-dom"; 
 
 const Login = () => {
-  const { login } = useAuth(); // Gunakan fungsi login dari AuthProvider
-  const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  // Debug: Cek apakah useAuth berfungsi
+  let authContext;
+  try {
+    authContext = useAuth();
+    console.log("Login.js: AuthContext:", authContext);
+  } catch (error) {
+    console.error("Login.js: Error getting auth context:", error);
+    authContext = null;
+  }
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const navigate = useNavigate();
+  
+  // State dengan nama yang berbeda untuk menghindari konflik
+  const [loginData, setLoginData] = useState({
+    username: "",
+    password: "",
+    error: "",
+    isLoading: false
+  });
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    
+    console.log("Login.js: handleSubmit called");
+    console.log("Login.js: Current loginData:", loginData);
     
     // Clear previous errors
-    setError("");
+    setLoginData(prev => ({ ...prev, error: "" }));
 
-    // Client-side validation for empty fields
-    if (!username.trim()) {
-      setError("Username tidak boleh kosong.");
+    // Client-side validation
+    if (!loginData.username.trim()) {
+      console.log("Login.js: Username kosong");
+      setLoginData(prev => ({ ...prev, error: "Username tidak boleh kosong." }));
       return;
     }
-    if (!password.trim()) {
-      setError("Password tidak boleh kosong.");
+    
+    if (!loginData.password.trim()) {
+      console.log("Login.js: Password kosong");
+      setLoginData(prev => ({ ...prev, error: "Password tidak boleh kosong." }));
       return;
     }
 
-    setIsLoading(true);
+    if (!authContext || !authContext.login) {
+      console.error("Login.js: AuthContext tidak tersedia");
+      setLoginData(prev => ({ ...prev, error: "Authentication service tidak tersedia." }));
+      return;
+    }
+
+    setLoginData(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const success = await login(username, password);
+      console.log("Login.js: Memanggil authContext.login");
+      const success = await authContext.login(loginData.username, loginData.password);
       
       if (success) {
         console.log("Login.js: Login berhasil");
         navigate("/users");
       } else {
-        setError("Username atau password salah.");
+        console.log("Login.js: Login gagal - credentials salah");
+        setLoginData(prev => ({ 
+          ...prev, 
+          error: "Username atau password salah.",
+          isLoading: false 
+        }));
       }
     } catch (err) {
-      console.error("Login.js: Error saat login:", err);
-      setError("Login gagal. Silakan coba lagi.");
-    } finally {
-      setIsLoading(false);
+      console.error("Login.js: Exception saat login:", err);
+      setLoginData(prev => ({ 
+        ...prev, 
+        error: "Login gagal. Silakan coba lagi.",
+        isLoading: false 
+      }));
     }
   };
 
-  const handleUsernameChange = (e) => {
-    setUsername(e.target.value);
-    if (error) setError("");
-  };
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-    if (error) setError("");
+  const handleInputChange = (field, value) => {
+    setLoginData(prev => ({
+      ...prev,
+      [field]: value,
+      error: prev.error ? "" : prev.error // Clear error when typing
+    }));
   };
 
   return (
@@ -80,8 +111,15 @@ const Login = () => {
         }}
       >
         <h2 style={{ marginBottom: "25px", color: "#f0f0f0" }}>Login</h2>
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          {error && (
+        
+        {/* Debug info */}
+        <div style={{ fontSize: "0.8em", color: "#999", marginBottom: "15px" }}>
+          Auth Available: {authContext ? "Yes" : "No"}
+          {authContext && <div>Login Function: {typeof authContext.login}</div>}
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {loginData.error && (
             <p
               style={{
                 color: "#ff6b6b", 
@@ -93,67 +131,65 @@ const Login = () => {
                 border: "1px solid #ff6b6b",
               }}
             >
-              {error}
+              {loginData.error}
             </p>
           )}
+          
           <input
             type="text"
             placeholder="Username"
-            value={username}
-            onChange={handleUsernameChange}
-            disabled={isLoading}
+            value={loginData.username}
+            onChange={(e) => handleInputChange('username', e.target.value)}
+            disabled={loginData.isLoading}
             style={{
               padding: "12px",
               border: "1px solid #555", 
               borderRadius: "5px",
               fontSize: "1em",
-              backgroundColor: isLoading ? "#2a2a2a" : "#4a4a4a", 
+              backgroundColor: loginData.isLoading ? "#2a2a2a" : "#4a4a4a", 
               color: "#f0f0f0",
               outline: "none",
-              opacity: isLoading ? 0.6 : 1,
+              opacity: loginData.isLoading ? 0.6 : 1,
             }}
           />
+          
           <input
             type="password"
             placeholder="Password"
-            value={password}
-            onChange={handlePasswordChange}
-            disabled={isLoading}
+            value={loginData.password}
+            onChange={(e) => handleInputChange('password', e.target.value)}
+            disabled={loginData.isLoading}
             style={{
               padding: "12px",
               border: "1px solid #555",
               borderRadius: "5px",
               fontSize: "1em",
-              backgroundColor: isLoading ? "#2a2a2a" : "#4a4a4a",
+              backgroundColor: loginData.isLoading ? "#2a2a2a" : "#4a4a4a",
               color: "#f0f0f0",
               outline: "none",
-              opacity: isLoading ? 0.6 : 1,
+              opacity: loginData.isLoading ? 0.6 : 1,
             }}
           />
+          
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={loginData.isLoading}
             style={{
               padding: "12px 20px",
-              backgroundColor: isLoading ? "#555" : "#007bff",
+              backgroundColor: loginData.isLoading ? "#555" : "#007bff",
               color: "white",
               border: "none",
               borderRadius: "5px",
               fontSize: "1.1em",
-              cursor: isLoading ? "not-allowed" : "pointer",
+              cursor: loginData.isLoading ? "not-allowed" : "pointer",
               transition: "background-color 0.3s ease",
-              opacity: isLoading ? 0.6 : 1,
-            }}
-            onMouseOver={(e) => {
-              if (!isLoading) e.target.style.backgroundColor = "#0056b3";
-            }}
-            onMouseOut={(e) => {
-              if (!isLoading) e.target.style.backgroundColor = "#007bff";
+              opacity: loginData.isLoading ? 0.6 : 1,
             }}
           >
-            {isLoading ? "Loading..." : "Login"}
+            {loginData.isLoading ? "Loading..." : "Login"}
           </button>
         </form>
+        
         <div style={{ marginTop: "25px", fontSize: "0.9em", color: "#ccc" }}>
           <p style={{ marginBottom: "10px" }}>Belum punya akun?</p>
           <Link
@@ -163,14 +199,8 @@ const Login = () => {
               textDecoration: "none",
               fontWeight: "bold",
               transition: "color 0.3s ease",
-              pointerEvents: isLoading ? "none" : "auto",
-              opacity: isLoading ? 0.6 : 1,
-            }}
-            onMouseOver={(e) => {
-              if (!isLoading) e.target.style.color = "#a0e6ff";
-            }}
-            onMouseOut={(e) => {
-              if (!isLoading) e.target.style.color = "#87ceeb";
+              pointerEvents: loginData.isLoading ? "none" : "auto",
+              opacity: loginData.isLoading ? 0.6 : 1,
             }}
           >
             Daftar di sini
