@@ -1,27 +1,34 @@
-import { Sequelize } from "sequelize";
+import { Sequelize, DataTypes } from "sequelize";
 import db from "../config/Database.js";
-
-const { DataTypes } = Sequelize;
 
 const User = db.define(
   'users',
   {
-    name: DataTypes.STRING,
-    title: DataTypes.STRING, 
-    isi_notes: DataTypes.TEXT, 
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    isi_notes: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     date_created: {
       type: DataTypes.DATE,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'), 
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
   },
   {
     freezeTableName: true,
-    timestamps: false, 
+    timestamps: false,
   }
 );
 
 export default User;
-
-(async () => {
-  await db.sync();
-})();

@@ -1,26 +1,48 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../utils";
-
+import useAxiosInterceptor from "../api/axiosInterceptor"; 
+import { useAuth } from "../auth/useAuth"; 
 
 const AddUser = () => {
+  
   const [name, setName] = useState("");
-  const [title, setTitle] = useState(""); 
-  const [isiNotes, setIsiNotes] = useState(""); 
+  const [title, setTitle] = useState("");
+  const [isiNotes, setIsiNotes] = useState("");
+  const [msg, setMsg] = useState(""); 
+
   const navigate = useNavigate();
+ 
+  const axiosJWT = useAxiosInterceptor();
+
+  const { setAuth } = useAuth();
 
   const saveUser = async (e) => {
     e.preventDefault();
+    setMsg(""); 
+
+    // Validasi input di sisi client
+    if (!name || !title || !isiNotes) {
+      setMsg("Semua kolom harus diisi"); // Tampilkan pesan validasi
+      return;
+    }
+
     try {
-      await axios.post(`${BASE_URL}/users`, {
+     
+      await axiosJWT.post("/users", { 
         name,
-        title, 
+        title,
         isi_notes: isiNotes, 
       });
-      navigate("/");
+      navigate("/users"); 
     } catch (error) {
-      console.log(error);
+      console.error("Error saving user:", error);
+     
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        setAuth(null); 
+        navigate("/login"); 
+      } else {
+        setMsg(error.response?.data?.msg || "Gagal menyimpan catatan. Silakan coba lagi.");
+      }
     }
   };
 
@@ -28,6 +50,9 @@ const AddUser = () => {
     <div className="columns mt-5 is-centered">
       <div className="column is-half">
         <form onSubmit={saveUser}>
+          {/* Tampilkan pesan error/informasi di UI jika ada */}
+          {msg && <p className="has-text-danger mb-4">{msg}</p>}
+
           <div className="field">
             <label className="label">Name</label>
             <div className="control">

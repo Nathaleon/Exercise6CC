@@ -1,8 +1,17 @@
-import {Sequelize} from "sequelize";
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 
-const db = new Sequelize('exc5', 'root', '', {
-    host: '34.50.76.140',
-    dialect: 'mysql'
+dotenv.config();
+
+const DB_NAME = process.env.DB_NAME;
+const DB_USERNAME = process.env.DB_USERNAME;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_HOST = process.env.DB_HOST;
+
+// Nyambungin db
+const db = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
+  host: DB_HOST,
+  dialect: "mysql",
 });
 
 export default db;

@@ -1,24 +1,60 @@
+### Register User Baru
+POST http://localhost:5000/register
+Content-Type: application/json
+
+{
+  "username": "leon",
+  "password": "password123",
+  "confPassword": "password123"
+}
+
+### Login User
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+  "username": "leon",
+  "password": "password123"
+}
+
+### Get Users (Notes) - Butuh Token dari Response Login
+# Ganti ACCESS_TOKEN_VALUE dengan token yang didapat dari response login
 GET http://localhost:5000/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInVzZXJuYW1lIjoibGVvbiIsImlhdCI6MTc0ODA3NDc3MSwiZXhwIjoxNzQ4MDc4MzcxfQ.TfuogRoC7g-LFBNwuxBxiaPAsAp9RXzgrpxspl8vDbw
 
-###
-POST  http://localhost:5000/users
+### Add Note - Butuh Token
+POST http://localhost:5000/users
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInVzZXJuYW1lIjoibGVvbiIsImlhdCI6MTc0ODA3NDc3MSwiZXhwIjoxNzQ4MDc4MzcxfQ.TfuogRoC7g-LFBNwuxBxiaPAsAp9RXzgrpxspl8vDbw
 
 {
-    "name": "Jane Doe",
-    "title": "Jane's Title",
-    "isi_notes": "Catatan ini adalah percobaan pertama dari web services notes"
+  "name": "Belajar Cloud Computing",
+  "title": "Catatan Penting",
+  "isi_notes": "Ini adalah catatan untuk belajar cloud computing."
 }
 
 ###
-PATCH http://localhost:5000/users/1
+POST http://localhost:5000/users
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInVzZXJuYW1lIjoibGVvbiIsImlhdCI6MTc0ODA3NDc3MSwiZXhwIjoxNzQ4MDc4MzcxfQ.TfuogRoC7g-LFBNwuxBxiaPAsAp9RXzgrpxspl8vDbw
 
 {
-    "name": "Jane Doe",
-    "title": "Jane's Title",
-    "isi_notes": "Some notes here"
+  "name": "Test2",
+  "title": "Testing Kedua",
+  "isi_notes": "Ini adalah catatan untuk belajar cloud computing."
 }
 
-###
-DELETE http://localhost:5000/users/2
+### Edit Note by ID (ganti :id dengan ID note sebenarnya) - Butuh Token
+PUT http://localhost:5000/users/:id
+Content-Type: application/json
+Authorization: Bearer ACCESS_TOKEN_VALUE
+
+{
+  "name": "Belajar Cloud Computing",
+  "title": "Catatan Update",
+  "isi_notes": "Catatan sudah diperbarui."
+}
+
+### Delete Note by ID (ganti :id dengan ID note sebenarnya) - Butuh Token
+DELETE http://localhost:5000/users/:id
+Authorization: Bearer ACCESS_TOKEN_VALUE

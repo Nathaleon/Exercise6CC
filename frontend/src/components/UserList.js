@@ -1,74 +1,105 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
-import { BASE_URL } from "../utils";
+import React, { useState, useEffect, useCallback } from "react";
+import useAxiosInterceptor from "../api/axiosInterceptor"; // Import custom hook
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
 
 const UserList = () => {
   const [users, setUser] = useState([]);
+  const { setAuth } = useAuth();
+  const navigate = useNavigate();
+  const axiosJWT = useAxiosInterceptor(); 
+
+  const getUsers = useCallback(async () => {
+    try {
+      const response = await axiosJWT.get("/users");
+      setUser(response.data);
+    } catch (error) {
+      console.log("Error fetching users:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        setAuth(null); // Hapus status autentikasi
+        navigate("/login"); // Redirect ke halaman login
+      }
+    }
+  }, [axiosJWT, setAuth, navigate]); // Include dependencies
 
   useEffect(() => {
     getUsers();
-  }, []);
-
-  const getUsers = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/users`);
-      setUser(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  }, [getUsers]); // Now include getUsers in dependency array
 
   const deleteUser = async (id) => {
     try {
-      await axios.delete(`${BASE_URL}/users/${id}`);
+      await axiosJWT.delete(`/users/${id}`); 
       getUsers(); 
     } catch (error) {
-      console.log(error);
+      console.log("Error deleting user:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        setAuth(null);
+        navigate("/login");
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axiosJWT.delete("/logout"); // Gunakan axiosJWT
+      setAuth(null); // Kosongkan konteks autentikasi
+      navigate("/login");
+    } catch (error) {
+      console.log("Error logging out:", error);
+      setAuth(null);
+      navigate("/login");
     }
   };
 
   return (
     <div className="columns mt-5 is-centered">
       <div className="column is-half">
-        <Link to={`add`} className="button is-success">
-          Add New
-        </Link>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+          <Link to="/users/add" className="button is-success">
+            Add New
+          </Link>
+          <button onClick={handleLogout} className="button is-danger">
+            Logout
+          </button>
+        </div>
         <table className="table is-striped is-fullwidth">
           <thead>
             <tr>
               <th>No</th>
               <th>Name</th>
-              <th>Title</th> 
-              <th>Notes</th> 
-              <th>Date Created</th> 
+              <th>Title</th>
+              <th>Notes</th>
+              <th>Date Created</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user, index) => (
-              <tr key={user.id}>
-                <td>{index + 1}</td>
-                <td>{user.name}</td>
-                <td>{user.title}</td> 
-                <td>{user.isi_notes}</td> 
-                <td>{new Date(user.date_created).toLocaleString()}</td> 
-                <td>
-                  <Link
-                    to={`edit/${user.id}`}
-                    className="button is-small is-info"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => deleteUser(user.id)}
-                    className="button is-small is-danger mt-2"
-                  >
-                    Delete
-                  </button>
-                </td>
+            {users.length > 0 ? ( // Tampilkan pesan jika tidak ada catatan
+              users.map((user, index) => (
+                <tr key={user.id}>
+                  <td>{index + 1}</td>
+                  <td>{user.name}</td>
+                  <td>{user.title}</td>
+                  <td>{user.isi_notes}</td>
+                  <td>{new Date(user.date_created).toLocaleString()}</td>
+                  <td>
+                    <Link to={`/users/edit/${user.id}`} className="button is-small is-info">
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => deleteUser(user.id)}
+                      className="button is-small is-danger mt-2"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="has-text-centered">Tidak ada catatan untuk ditampilkan.</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
