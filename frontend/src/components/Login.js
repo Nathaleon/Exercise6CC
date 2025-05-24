@@ -4,14 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   // Debug: Cek apakah useAuth berfungsi
-  let authContext;
-  try {
-    authContext = useAuth();
-    console.log("Login.js: AuthContext:", authContext);
-  } catch (error) {
-    console.error("Login.js: Error getting auth context:", error);
-    authContext = null;
-  }
+  const authContext = useAuth();
+  console.log("Login.js: AuthContext:", authContext);
 
   const navigate = useNavigate();
   
