@@ -86,10 +86,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Fungsi setAuth yang dibutuhkan oleh Login component
-  const setAuth = ({ username: newUsername, accessToken: newAccessToken }) => {
-    setUsername(newUsername);
-    setAccessToken(newAccessToken);
-    console.log("AuthProvider - Auth set manually:", { username: newUsername, hasToken: !!newAccessToken });
+  const setAuth = (authData) => {
+    if (authData && typeof authData === 'object') {
+      const { username: newUsername, accessToken: newAccessToken } = authData;
+      setUsername(newUsername);
+      setAccessToken(newAccessToken);
+      console.log("AuthProvider - Auth set manually:", { username: newUsername, hasToken: !!newAccessToken });
+    } else {
+      // Handle logout case where authData might be null
+      setUsername(null);
+      setAccessToken(null);
+      console.log("AuthProvider - Auth cleared");
+    }
   };
 
   // Create auth object for compatibility with ProtectedRoute
