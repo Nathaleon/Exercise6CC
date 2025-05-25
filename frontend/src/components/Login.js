@@ -1,83 +1,55 @@
 import { useState } from "react";
+import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../auth/useAuth";
 import { useNavigate, Link } from "react-router-dom"; 
 
 const Login = () => {
-  // Debug: Cek apakah useAuth berfungsi
-  const authContext = useAuth();
-  console.log("Login.js: AuthContext:", authContext);
-
+  const { setAuth } = useAuth();
   const navigate = useNavigate();
-  
-  // State dengan nama yang berbeda untuk menghindari konflik
-  const [loginData, setLoginData] = useState({
-    username: "",
-    password: "",
-    error: "",
-    isLoading: false
-  });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    
-    console.log("Login.js: handleSubmit called");
-    console.log("Login.js: Current loginData:", loginData);
-    
-    // Clear previous errors
-    setLoginData(prev => ({ ...prev, error: "" }));
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-    // Client-side validation
-    if (!loginData.username.trim()) {
-      console.log("Login.js: Username kosong");
-      setLoginData(prev => ({ ...prev, error: "Username tidak boleh kosong." }));
+    // Client-side validation for empty fields
+    if (!username.trim()) {
+      setErrorMessage("Username tidak boleh kosong.");
       return;
     }
-    
-    if (!loginData.password.trim()) {
-      console.log("Login.js: Password kosong");
-      setLoginData(prev => ({ ...prev, error: "Password tidak boleh kosong." }));
+    if (!password.trim()) {
+      setErrorMessage("Password tidak boleh kosong.");
       return;
     }
-
-    if (!authContext || !authContext.login) {
-      console.error("Login.js: AuthContext tidak tersedia");
-      setLoginData(prev => ({ ...prev, error: "Authentication service tidak tersedia." }));
-      return;
-    }
-
-    setLoginData(prev => ({ ...prev, isLoading: true }));
 
     try {
-      console.log("Login.js: Memanggil authContext.login");
-      const success = await authContext.login(loginData.username, loginData.password);
-      
-      if (success) {
-        console.log("Login.js: Login berhasil");
-        navigate("/users");
-      } else {
-        console.log("Login.js: Login gagal - credentials salah");
-        setLoginData(prev => ({ 
-          ...prev, 
-          error: "Username atau password salah.",
-          isLoading: false 
-        }));
-      }
+      const res = await axiosInstance.post("/login", { username, password });
+      setAuth({ username: res.data.username, accessToken: res.data.accessToken });
+      console.log("Login.js: setAuth dipanggil dengan:", { username: res.data.username, accessToken: res.data.accessToken });
+      navigate("/users");
     } catch (err) {
-      console.error("Login.js: Exception saat login:", err);
-      setLoginData(prev => ({ 
-        ...prev, 
-        error: "Login gagal. Silakan coba lagi.",
-        isLoading: false 
-      }));
+      // More robust error handling
+      let errorMsg = "Login gagal. Silakan coba lagi.";
+      
+      if (err.response?.data) {
+        // Handle different response formats
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        } else if (err.response.data.msg) {
+          errorMsg = err.response.data.msg;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      setErrorMessage(errorMsg);
+      console.error("Login.js: Login gagal karena:", errorMsg, err); 
     }
-  };
-
-  const handleInputChange = (field, value) => {
-    setLoginData(prev => ({
-      ...prev,
-      [field]: value,
-      error: prev.error ? "" : prev.error // Clear error when typing
-    }));
   };
 
   return (
@@ -88,32 +60,25 @@ const Login = () => {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
-        backgroundColor: "#2c2c2c",
+        backgroundColor: "#2c2c2c", // Dark grey background
         fontFamily: "Arial, sans-serif",
-        color: "#f0f0f0",
+        color: "#f0f0f0", // Light text color for contrast
       }}
     >
       <div
         style={{
-          backgroundColor: "#3a3a3a",
+          backgroundColor: "#3a3a3a", // Slightly lighter dark grey for the form container
           padding: "40px",
           borderRadius: "8px",
-          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.4)",
+          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.4)", // Darker shadow for depth
           width: "350px",
-          maxWidth: "90%",
+          maxWidth: "90%", // Responsive width
           textAlign: "center",
         }}
       >
         <h2 style={{ marginBottom: "25px", color: "#f0f0f0" }}>Login</h2>
-        
-        {/* Debug info */}
-        <div style={{ fontSize: "0.8em", color: "#999", marginBottom: "15px" }}>
-          Auth Available: {authContext ? "Yes" : "No"}
-          {authContext && <div>Login Function: {typeof authContext.login}</div>}
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          {loginData.error && (
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {errorMessage && (
             <p
               style={{
                 color: "#ff6b6b", 
@@ -125,77 +90,69 @@ const Login = () => {
                 border: "1px solid #ff6b6b",
               }}
             >
-              {loginData.error}
+              {errorMessage}
             </p>
           )}
-          
           <input
             type="text"
             placeholder="Username"
-            value={loginData.username}
-            onChange={(e) => handleInputChange('username', e.target.value)}
-            disabled={loginData.isLoading}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             style={{
               padding: "12px",
               border: "1px solid #555", 
               borderRadius: "5px",
               fontSize: "1em",
-              backgroundColor: loginData.isLoading ? "#2a2a2a" : "#4a4a4a", 
+              backgroundColor: "#4a4a4a", 
               color: "#f0f0f0",
               outline: "none",
-              opacity: loginData.isLoading ? 0.6 : 1,
             }}
           />
-          
           <input
             type="password"
             placeholder="Password"
-            value={loginData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            disabled={loginData.isLoading}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             style={{
               padding: "12px",
               border: "1px solid #555",
               borderRadius: "5px",
               fontSize: "1em",
-              backgroundColor: loginData.isLoading ? "#2a2a2a" : "#4a4a4a",
+              backgroundColor: "#4a4a4a",
               color: "#f0f0f0",
               outline: "none",
-              opacity: loginData.isLoading ? 0.6 : 1,
             }}
           />
-          
           <button
             type="submit"
-            disabled={loginData.isLoading}
             style={{
               padding: "12px 20px",
-              backgroundColor: loginData.isLoading ? "#555" : "#007bff",
+              backgroundColor: "#007bff", // A vibrant blue for the button
               color: "white",
               border: "none",
               borderRadius: "5px",
               fontSize: "1.1em",
-              cursor: loginData.isLoading ? "not-allowed" : "pointer",
+              cursor: "pointer",
               transition: "background-color 0.3s ease",
-              opacity: loginData.isLoading ? 0.6 : 1,
             }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#0056b3")} // Darken on hover
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#007bff")} // Revert on mouse out
           >
-            {loginData.isLoading ? "Loading..." : "Login"}
+            Login
           </button>
         </form>
-        
         <div style={{ marginTop: "25px", fontSize: "0.9em", color: "#ccc" }}>
           <p style={{ marginBottom: "10px" }}>Belum punya akun?</p>
           <Link
             to="/register"
             style={{
-              color: "#87ceeb",
+              color: "#87ceeb", // A light blue for the link
               textDecoration: "none",
               fontWeight: "bold",
               transition: "color 0.3s ease",
-              pointerEvents: loginData.isLoading ? "none" : "auto",
-              opacity: loginData.isLoading ? 0.6 : 1,
             }}
+            onMouseOver={(e) => (e.target.style.color = "#a0e6ff")}
+            onMouseOut={(e) => (e.target.style.color = "#87ceeb")}
           >
             Daftar di sini
           </Link>
