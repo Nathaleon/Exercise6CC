@@ -3,12 +3,18 @@ service: tcc-fe-leon
 instance_class: F1
 
 handlers:
-  - url: /
+  # Tangani file statis (CSS, JS, gambar, dll)
+  - url: /(.*\.(js|css|png|jpg|svg|ico|json|txt))$
+    static_files: build/\1
+    upload: build/.*\.(js|css|png|jpg|svg|ico|json|txt)
+
+  # Tangani direktori static (misalnya /static)
+  - url: /static
+    static_dir: build/static
+
+  # Redirect semua route lain ke index.html (untuk React Router)
+  - url: /.*
     static_files: build/index.html
     upload: build/index.html
-
-  - url: /(.*)
-    static_files: build/\1
-    upload: build/(.*)
 
 default_expiration: "1h"
