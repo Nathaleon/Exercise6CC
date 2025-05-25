@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import axios from "../api/axiosInstance";
 import PropTypes from "prop-types";
@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }) => {
         login, 
         logout, 
         refreshAccessToken,
-        setAuth
+        setAuth // Tambahkan setAuth ke context
       }}
     >
       {children}
