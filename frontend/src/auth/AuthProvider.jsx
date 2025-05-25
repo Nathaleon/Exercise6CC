@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import Cookies from "js-cookie";
-import axios from "../api/axiosInstance";
+import axios from "../api/axiosInstance"; // Assuming this is your base axios instance
 import PropTypes from "prop-types";
 import { BASE_URL } from "../utils.js";
 
@@ -18,14 +18,13 @@ export const AuthProvider = ({ children }) => {
         const refreshToken = Cookies.get("refreshToken");
         
         if (refreshToken) {
-          // Try to refresh the access token if refresh token exists
           console.log("AuthProvider - Found refresh token, attempting to refresh access token");
           const newAccessToken = await refreshAccessToken();
           
           if (newAccessToken && newAccessToken !== "kosong") {
             console.log("AuthProvider - Successfully refreshed access token on initialization");
           } else {
-            console.log("AuthProvider - Failed to refresh token on initialization");
+            console.log("AuthProvider - Failed to refresh token on initialization (newAccessToken was empty/kosong)");
           }
         } else {
           console.log("AuthProvider - No refresh token found");
@@ -76,28 +75,44 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await axios.get(`${BASE_URL}/token`);
       setAccessToken(res.data.accessToken);
+      // When refreshing, we typically don't get username back from /token endpoint
+      // So, we preserve the existing username.
+      // If your /token endpoint returns username, you can update it here:
+      // setUsername(res.data.username); 
       console.log("AuthProvider - Token refreshed successfully");
       return res.data.accessToken;
     } catch (err) {
       console.error("Token refresh failed:", err);
-      logout();
+      logout(); // If refresh fails, log out the user entirely
       return "kosong";
     }
   };
 
-  // Fungsi setAuth yang dibutuhkan oleh Login component
+  // Fungsi setAuth yang dibutuhkan oleh Login component dan interceptor
   const setAuth = (authData) => {
-    if (authData && typeof authData === 'object') {
-      const { username: newUsername, accessToken: newAccessToken } = authData;
-      setUsername(newUsername);
-      setAccessToken(newAccessToken);
-      console.log("AuthProvider - Auth set manually:", { username: newUsername, hasToken: !!newAccessToken });
-    } else {
-      // Handle logout case where authData might be null
+    // Defensive check: if authData is null, undefined, or not an object, clear auth and return.
+    if (!authData || typeof authData !== 'object') {
       setUsername(null);
       setAccessToken(null);
-      console.log("AuthProvider - Auth cleared");
+      console.log("AuthProvider - Auth cleared due to invalid input:", authData);
+      return; // Crucial: exit early
     }
+
+    // Now, we are certain authData is an object.
+    // Add another layer of check to ensure username and accessToken properties exist
+    // This prevents destructuring errors if the object is malformed.
+    if (!('username' in authData) || !('accessToken' in authData)) {
+      console.warn("AuthProvider - setAuth called with partial or malformed authData, clearing:", authData);
+      setUsername(null);
+      setAccessToken(null);
+      return;
+    }
+
+    // Destructure only if we are sure it's a valid object with expected properties
+    const { username: newUsername, accessToken: newAccessToken } = authData;
+    setUsername(newUsername);
+    setAccessToken(newAccessToken);
+    console.log("AuthProvider - Auth set manually:", { username: newUsername, hasToken: !!newAccessToken });
   };
 
   // Create auth object for compatibility with ProtectedRoute
