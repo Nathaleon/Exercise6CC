@@ -86,16 +86,18 @@ const UserList = () => {
                   <td>{user.title}</td>
                   <td>{user.isi_notes}</td>
                   <td>{new Date(user.date_created).toLocaleString()}</td>
-                  <td>
-                    <Link to={`/users/edit/${user.id}`} className="button is-small is-info">
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => deleteUser(user.id)}
-                      className="button is-small is-danger mt-2"
-                    >
-                      Delete
-                    </button>
+                   <td>
+                    <div className="buttons">
+                      <Link to={`/users/edit/${user.id}`} className="button is-small is-info">
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        className="button is-small is-danger"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
