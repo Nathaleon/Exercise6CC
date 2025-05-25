@@ -1,27 +1,17 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { useState, useEffect } from "react";
 
 const ProtectedRoute = ({ children }) => {
-  const { auth } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Berikan waktu sedikit untuk auth state ter-load dari localStorage
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
+  const { accessToken, username, isInitializing } = useAuth();
 
   // Debug logs
-  console.log("ProtectedRoute - Auth state:", auth);
-  console.log("ProtectedRoute - Access Token:", auth?.accessToken);
-  console.log("ProtectedRoute - Is Loading:", isLoading);
+  console.log("ProtectedRoute - Access Token:", accessToken);
+  console.log("ProtectedRoute - Username:", username);
+  console.log("ProtectedRoute - Is Initializing:", isInitializing);
 
-  // Tampilkan loading sementara auth state sedang dimuat
-  if (isLoading) {
+  // Show loading while auth is being initialized
+  if (isInitializing) {
+    console.log("ProtectedRoute - Still initializing auth state");
     return (
       <div style={{ 
         display: 'flex', 
@@ -35,10 +25,10 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // Cek apakah user sudah login
-  if (!auth || !auth.accessToken || !auth.username) {
+  // Check if user is authenticated
+  if (!accessToken || !username) {
     console.log("ProtectedRoute - Redirecting to login because auth is incomplete.");
-    console.log("ProtectedRoute - Auth object:", JSON.stringify(auth, null, 2));
+    console.log("ProtectedRoute - Auth state:", { accessToken: !!accessToken, username });
     return <Navigate to="/login" replace />;
   }
 
